@@ -1,0 +1,276 @@
+{
+  "people": {
+    "n-esenia": {
+      "name": "Есения",
+      "role": "я",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Есения.JPG"
+    },
+    "n-stefania": {
+      "name": "Стефания",
+      "role": "сестра",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Стефания.JPG"
+    },
+    "n-alexander": {
+      "name": "Александр",
+      "role": "дядя",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Дядя Александр.JPG"
+    },
+    "n-anastasia": {
+      "name": "Анастасия",
+      "role": "мама",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Мама Анастасия.JPG"
+    },
+    "n-kirill": {
+      "name": "Кирилл",
+      "role": "папа",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Папа Кирилл.JPG"
+    },
+    "n-ilya": {
+      "name": "Илья Николаевич",
+      "role": "дядя",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Дядя Илья.JPG"
+    },
+    "n-tatyana": {
+      "name": "Татьяна Николаевна",
+      "role": "бабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Бабушка Татьяна.JPG"
+    },
+    "n-mikhail": {
+      "name": "Михаил Николаевич",
+      "role": "дедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Дешушка Михаил.JPG"
+    },
+    "n-larisa": {
+      "name": "Лариса Анатольевна",
+      "role": "бабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Бабушка Лариса.JPG"
+    },
+    "n-nikolay3": {
+      "name": "Николай Викторович",
+      "role": "дедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Дедушка Николай.JPG"
+    },
+    "n-svetlana": {
+      "name": "Светлана Андреевна",
+      "role": "прабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прабабушка Светлана.JPG"
+    },
+    "n-nikolay1": {
+      "name": "Николай Павлович Егоров",
+      "role": "прадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прадедушка Николай.JPG"
+    },
+    "n-polina": {
+      "name": "Пилогея Григорьевна Антошкина",
+      "role": "прабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-nikolay2": {
+      "name": "Николай Матвеевич Коцюбинский",
+      "role": "прадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прадедушка  Николай.JPG"
+    },
+    "n-faina": {
+      "name": "Фаина Ивановна",
+      "role": "прабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прабабушка Фаина.JPG"
+    },
+    "n-anatoly": {
+      "name": "Анатолий Корнилович",
+      "role": "прадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прадедушка Анатолий.JPG"
+    },
+    "n-viktor": {
+      "name": "Виктор Ильич Петров",
+      "role": "прадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прадедушка Виктор.jpg"
+    },
+    "n-alexandra": {
+      "name": "Александра Стефановна",
+      "role": "прабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прабабушка Александра.JPG"
+    },
+    "n-avgusta": {
+      "name": "Августа Трафимовна",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-andrey-filipov": {
+      "name": "Андрей Гаврилович Филипов",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-maria-krasnova": {
+      "name": "Мария Краснова",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-pavel-egorov": {
+      "name": "Павел Егоров",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-anna": {
+      "name": "Анна",
+      "role": "прапрапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-grigoriy": {
+      "name": "Григорий",
+      "role": "прапрапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-matvey-wife": {
+      "name": "Фекла Петровна Корикова",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-matvey": {
+      "name": "Матвей Григорьевич Коцюбинский",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": "Прадедушка Матвей.JPG"
+    },
+    "n-maria": {
+      "name": "Мария Павловна",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-ivan": {
+      "name": "Иван Павлович",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-anna-kornil": {
+      "name": "Анна Михайловна",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-kornil": {
+      "name": "Корнил Степанович",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-evdakiya": {
+      "name": "Евдакия Михайловна Перина",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-ilya-petr": {
+      "name": "Илья Васильевич Петров",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-matrena": {
+      "name": "Матрёна Андреевна",
+      "role": "прапрабабушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    },
+    "n-stefan": {
+      "name": "Стефан Алексеевич",
+      "role": "прапрадедушка",
+      "birthDate": "",
+      "birthPlace": "",
+      "deathDate": "",
+      "photoUrl": ""
+    }
+  }
+}

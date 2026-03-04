@@ -475,6 +475,153 @@
     justify-content: center;
     font-size: 28px;
   }
+
+  /* === EDIT MODE === */
+  .edit-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 12px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 20px;
+    border: 2px solid #d4a96a;
+    background: white;
+    color: #7a4a1e;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 600;
+    font-size: 0.9em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(180,120,60,0.2);
+  }
+  .btn:hover {
+    background: #d4a96a;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(180,120,60,0.3);
+  }
+  .btn.active {
+    background: #c0392b;
+    border-color: #c0392b;
+    color: white;
+  }
+  .edit-icon {
+    position: absolute;
+    top: 2px;
+    right: -6px;
+    background: white;
+    border: 2px solid #27ae60;
+    color: #27ae60;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content:center;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 5;
+    transition: all 0.2s;
+  }
+  .edit-icon:hover {
+    background: #27ae60;
+    color: white;
+    transform: scale(1.1);
+  }
+  .edit-mode .edit-icon {
+    display: flex;
+  }
+  
+  /* === MODAL === */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal.active {
+    display: flex;
+  }
+  .modal-content {
+    background: linear-gradient(160deg, #fffdf7 0%, #fff8ee 100%);
+    border: 3px solid #d4a96a;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5em;
+    color: #7a4a1e;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .form-group {
+    margin-bottom: 16px;
+  }
+  .form-group label {
+    display: block;
+    color: #7a4a1e;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.9em;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #d4a96a;
+    border-radius: 8px;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.95em;
+    background: white;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #b87030;
+    box-shadow: 0 0 8px rgba(184,112,48,0.3);
+  }
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .form-actions .btn {
+    flex: 1;
+  }
+  .github-token-info {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 12px 0;
+    font-size: 0.85em;
+    color: #856404;
+  }
+  .github-token-info a {
+    color: #0366d6;
+    text-decoration: underline;
+  }
+  .loading {
+    text-align: center;
+    padding: 10px;
+    color: #b87030;
+    font-style: italic;
+  }
 </style>
 </head>
 <body>
@@ -487,6 +634,13 @@
 <div class="page">
   <h1>🌳 Моё генеалогическое дерево 🌳</h1>
   <p class="subtitle">Семья Есении</p>
+  
+  <!-- Edit Controls -->
+  <div class="edit-controls">
+    <button class="btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ Режим редактирования</button>
+    <button class="btn" id="github-settings-btn" onclick="showGithubSettings()">⚙️ Настройки GitHub</button>
+  </div>
+  
   <div class="divider"></div>
 
   <div id="tree-container" style="position:relative; width:100%;">
@@ -1189,5 +1343,288 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 3000);
 });
 </script>
+
+<!-- Edit Modal -->
+<div class="modal" id="edit-modal">
+  <div class="modal-content">
+    <h2 class="modal-header">✏️ Редактирование</h2>
+    <div id="modal-form">
+      <div class="form-group">
+        <label>Имя:</label>
+        <input type="text" id="edit-name" placeholder="Имя">
+      </div>
+      <div class="form-group">
+        <label>Роль:</label>
+        <input type="text" id="edit-role" placeholder="мама, папа, бабушка...">
+      </div>
+      <div class="form-group">
+        <label>Дата рождения:</label>
+        <input type="text" id="edit-birthDate" placeholder="01.01.1950 или 1950">
+      </div>
+      <div class="form-group">
+        <label>Город рождения:</label>
+        <input type="text" id="edit-birthPlace" placeholder="Москва">
+      </div>
+      <div class="form-group">
+        <label>Дата смерти:</label>
+        <input type="text" id="edit-deathDate" placeholder="Оставьте пустым, если жив">
+      </div>
+      <div class="form-group">
+        <label>URL фотографии:</label>
+        <input type="text" id="edit-photoUrl" placeholder="https://i.imgur.com/xxx.jpg">
+        <small style="color:#a07040;font-size:0.8em;margin-top:4px;display:block">
+          💡 Загрузите фото на <a href="https://imgur.com/upload" target="_blank">Imgur</a> и вставьте ссылку
+        </small>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeEditModal()">❌ Отмена</button>
+        <button class="btn" style="border-color:#27ae60;color:#27ae60" onclick="savePersonData()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GitHub Settings Modal -->
+<div class="modal" id="github-modal">
+  <div class="modal-content">
+    <h2 class="modal-header">⚙️ Настройки GitHub</h2>
+    <div class="github-token-info">
+      <strong>📖 Как получить токен:</strong><br>
+      1. Перейдите: <a href="https://github.com/settings/tokens/new" target="_blank">GitHub → Settings → Developer settings → Personal access tokens</a><br>
+      2. Создайте новый токен с правами <code>repo</code><br>
+      3. Скопируйте токен и вставьте ниже
+    </div>
+    <div class="form-group">
+      <label>GitHub Token:</label>
+      <input type="password" id="github-token" placeholder="ghp_xxxxxxxxx">
+    </div>
+    <div class="form-group">
+      <label>Repository:</label>
+      <input type="text" id="github-repo" value="kirillpetrovrf/family-tree" placeholder="username/repo">
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeGithubModal()">❌ Отмена</button>
+      <button class="btn" style="border-color:#27ae60;color:#27ae60" onclick="saveGithubSettings()">💾 Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === EDIT MODE SYSTEM ===
+let editMode = false;
+let currentEditingId = null;
+let githubToken = localStorage.getItem('gh_token') || '';
+let githubRepo = localStorage.getItem('gh_repo') || 'kirillpetrovrf/family-tree';
+
+// Load saved GitHub settings
+if (githubToken) {
+  document.getElementById('github-token').value = githubToken;
+}
+document.getElementById('github-repo').value = githubRepo;
+
+function toggleEditMode() {
+  editMode = !editMode;
+  const container = document.getElementById('tree-container');
+  const btn = document.getElementById('edit-mode-btn');
+  
+  if (editMode) {
+    container.classList.add('edit-mode');
+    btn.classList.add('active');
+    btn.innerHTML = '✏️ Режим редактирования (ВКЛ)';
+    addEditIcons();
+  } else {
+    container.classList.remove('edit-mode');
+    btn.classList.remove('active');
+    btn.innerHTML = '✏️ Режим редактирования';
+  }
+}
+
+function addEditIcons() {
+  document.querySelectorAll('.node').forEach(node => {
+    if (node.querySelector('.edit-icon')) return; // Already has icon
+    
+    const icon = document.createElement('div');
+    icon.className = 'edit-icon';
+    icon.innerHTML = '✏️';
+    icon.onclick = function(e) {
+      e.stopPropagation();
+      openEditModal(node.id);
+    };
+    node.style.position = 'relative';
+    node.appendChild(icon);
+  });
+}
+
+function openEditModal(nodeId) {
+  currentEditingId = nodeId;
+  const node = document.getElementById(nodeId);
+  
+  // Get current values
+  const nameEl = node.querySelector('.name');
+  const roleEl = node.querySelector('.role');
+  const photoEl = node.querySelector('.photo');
+  
+  document.getElementById('edit-name').value = nameEl ? nameEl.textContent : '';
+  document.getElementById('edit-role').value = roleEl ? roleEl.textContent : '';
+  document.getElementById('edit-birthDate').value = '';
+  document.getElementById('edit-birthPlace').value = '';
+  document.getElementById('edit-deathDate').value = '';
+  document.getElementById('edit-photoUrl').value = photoEl ? photoEl.src : '';
+  
+  document.getElementById('edit-modal').classList.add('active');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('active');
+  currentEditingId = null;
+}
+
+function showGithubSettings() {
+  document.getElementById('github-modal').classList.add('active');
+}
+
+function closeGithubModal() {
+  document.getElementById('github-modal').classList.remove('active');
+}
+
+function saveGithubSettings() {
+  const token = document.getElementById('github-token').value.trim();
+  const repo = document.getElementById('github-repo').value.trim();
+  
+  if (!token || !repo) {
+    alert('Пожалуйста, заполните все поля');
+    return;
+  }
+  
+  localStorage.setItem('gh_token', token);
+  localStorage.setItem('gh_repo', repo);
+  githubToken = token;
+  githubRepo = repo;
+  
+  alert('✅ Настройки сохранены!');
+  closeGithubModal();
+}
+
+async function savePersonData() {
+  if (!currentEditingId) return;
+  
+  const name = document.getElementById('edit-name').value.trim();
+  const role = document.getElementById('edit-role').value.trim();
+  const birthDate = document.getElementById('edit-birthDate').value.trim();
+  const birthPlace = document.getElementById('edit-birthPlace').value.trim();
+  const deathDate = document.getElementById('edit-deathDate').value.trim();
+  const photoUrl = document.getElementById('edit-photoUrl').value.trim();
+  
+  if (!name) {
+    alert('Имя обязательно!');
+    return;
+  }
+  
+  // Update UI immediately
+  const node = document.getElementById(currentEditingId);
+  const nameEl = node.querySelector('.name');
+  const roleEl = node.querySelector('.role');
+  const photoEl = node.querySelector('.photo');
+  
+  if (nameEl) nameEl.textContent = name;
+  if (roleEl) roleEl.textContent = role;
+  if (photoEl && photoUrl) photoEl.src = photoUrl;
+  
+  // Save to GitHub
+  if (githubToken) {
+    try {
+      await saveToGitHub({
+        id: currentEditingId,
+        name,
+        role,
+        birthDate,
+        birthPlace,
+        deathDate,
+        photoUrl
+      });
+      alert('✅ Данные сохранены на GitHub!');
+    } catch (error) {
+      console.error('Error saving to GitHub:', error);
+      alert('❌ Ошибка при сохранении на GitHub: ' + error.message);
+    }
+  } else {
+    alert('⚠️ Изменения применены локально. Настройте GitHub для синхронизации.');
+  }
+  
+  closeEditModal();
+}
+
+async function saveToGitHub(personData) {
+  // 1. Get current family_data.json
+  const getUrl = `https://api.github.com/repos/${githubRepo}/contents/family_data.json`;
+  
+  let jsonData = { people: {} };
+  let sha = null;
+  
+  try {
+    const getResponse = await fetch(getUrl, {
+      headers: {
+        'Authorization': `token ${githubToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    if (getResponse.ok) {
+      const fileData = await getResponse.json();
+      sha = fileData.sha;
+      const content = atob(fileData.content);
+      jsonData = JSON.parse(content);
+    }
+  } catch (e) {
+    console.log('Creating new family_data.json');
+  }
+  
+  // 2. Update data
+  if (!jsonData.people) jsonData.people = {};
+  jsonData.people[personData.id] = {
+    name: personData.name,
+    role: personData.role,
+    birthDate: personData.birthDate,
+    birthPlace: personData.birthPlace,
+    deathDate: personData.deathDate,
+    photoUrl: personData.photoUrl
+  };
+  
+  // 3. Save back to GitHub
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonData, null, 2))));
+  
+  const putUrl = `https://api.github.com/repos/${githubRepo}/contents/family_data.json`;
+  const putResponse = await fetch(putUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `token ${githubToken}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: `Update ${personData.name} data`,
+      content: content,
+      sha: sha
+    })
+  });
+  
+  if (!putResponse.ok) {
+    const error = await putResponse.json();
+    throw new Error(error.message || 'GitHub API error');
+  }
+  
+  return await putResponse.json();
+}
+
+// Close modals on click outside
+document.getElementById('edit-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEditModal();
+});
+
+document.getElementById('github-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeGithubModal();
+});
+</script>
+
 </body>
 </html>
