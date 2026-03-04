@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Моё генеалогическое дерево</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@400;600&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: linear-gradient(135deg, #fdf6ec 0%, #fce8d0 50%, #fdf6ec 100%);
+    font-family: 'Raleway', sans-serif;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .page {
+    max-width: 2600px;
+    margin: 0 auto;
+    background: linear-gradient(160deg, #fffdf7 0%, #fff8ee 100%);
+    border-radius: 24px;
+    box-shadow: 0 8px 40px rgba(180,120,60,0.18);
+    border: 3px solid #d4a96a;
+    padding: 30px 20px 40px;
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* Декоративные уголки */
+  .page::before, .page::after {
+    content: '🌿';
+    font-size: 48px;
+    position: absolute;
+    top: 10px;
+  }
+  .page::before { left: 15px; }
+  .page::after { right: 15px; transform: scaleX(-1); }
+
+  h1 {
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2em;
+    color: #7a4a1e;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px 3px rgba(180,120,60,0.2);
+  }
+  .subtitle {
+    text-align: center;
+    color: #b07840;
+    font-size: 1em;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  /* Дерево */
+  .tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    position: relative;
+  }
+
+  /* Строка поколения */
+  .generation {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+    width: 100%;
+  }
+
+  .gen-label {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7em;
+    color: #c09060;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    letter-spacing: 1px;
+    padding: 4px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
+  }
+
+  /* Группа (пара или один) */
+  .group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+  }
+
+  .couple {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    position: relative;
+  }
+
+  /* Горизонтальная линия между супругами */
+  .couple::after {
+    content: '♥';
+    position: absolute;
+    bottom: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #e07070;
+    font-size: 14px;
+    z-index: 2;
+    background: white;
+    padding: 0 2px;
+    border-radius: 50%;
+  }
+
+  /* Узел — фото + имя */
+  .node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    position: relative;
+  }
+
+  .photo-wrap {
+    position: relative;
+  }
+
+  .photo {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center top;
+    border: 3px solid #d4a96a;
+    box-shadow: 0 4px 12px rgba(180,120,60,0.25);
+    display: block;
+    background: #f5e8d0;
+    transition: transform 0.2s;
+  }
+  .photo:hover { transform: scale(1.08); }
+
+  /* Размеры по поколению */
+  .gen4 .photo { width: 72px; height: 72px; border-width: 2px; }
+  .gen3 .photo { width: 82px; height: 82px; }
+  .gen2 .photo { width: 90px; height: 90px; }
+  .gen1 .photo { width: 100px; height: 100px; border-width: 4px; border-color: #c0392b; }
+  .gen0 .photo { width: 110px; height: 110px; border-width: 4px; border-color: #27ae60; box-shadow: 0 4px 20px rgba(39,174,96,0.4); }
+
+  .name {
+    text-align: center;
+    font-size: 0.92em;
+    font-weight: 600;
+    color: #5a3010;
+    max-width: 110px;
+    line-height: 1.3;
+  }
+  .gen4 .name {
+    max-width: 130px;
+    font-size: 0.8em;
+  }
+  .role {
+    text-align: center;
+    font-size: 0.8em;
+    color: #a07040;
+    font-style: italic;
+  }
+
+  /* === CONNECTOR LINES via SVG === */
+  .connector-svg {
+    width: 100%;
+    overflow: visible;
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+  }
+
+  /* Вертикальный коннектор между строками */
+  .v-connector {
+    width: 100%;
+    height: 50px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .v-connector svg {
+    width: 100%;
+    height: 50px;
+    overflow: visible;
+  }
+
+  /* Декоративный разделитель */
+  .divider {
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #d4a96a, #c0392b, #d4a96a, transparent);
+    margin: 10px auto;
+    border-radius: 2px;
+  }
+
+  /* Пустышка-разделитель для отступов */
+  .spacer { width: 20px; flex-shrink: 0; }
+
+  /* Большой разделитель между левой и правой семьями */
+  .family-sep {
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, #d4a96a, transparent);
+    margin: 0 10px;
+    align-self: stretch;
+  }
+
+  /* Легенда */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75em;
+    color: #7a4a1e;
+  }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid;
+  }
+
+  /* Заголовки поколений */
+  .gen-title {
+    text-align: center;
+    font-size: 0.75em;
+    font-weight: 600;
+    color: #b07840;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 20px;
+    padding: 3px 16px;
+    display: inline-block;
+  }
+
+  .gen-title-row {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 6px;
+  }
+
+  /* Блок-строка с отступом сверху */
+  .gen-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0;
+  }
+
+  /* Линии-стрелки — рисуем SVG поверх */
+  .tree-container {
+    position: relative;
+    width: 100%;
+    min-width: 2800px;
+  }
+
+  canvas#lines {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .tree { position: relative; z-index: 1; }
+
+  /* === LIGHTBOX === */
+  #lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    cursor: zoom-out;
+  }
+  #lightbox.active { display: flex; }
+  #lightbox img {
+    border-radius: 50%;
+    border: 5px solid #d4a96a;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    max-width: 85vw;
+    max-height: 85vh;
+    object-fit: cover;
+    animation: popIn 0.2s ease;
+  }
+  #lightbox-name {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4em;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .photo { cursor: zoom-in; }
+
+  /* === PRINT === */
+  @media print {
+    body { background: white; padding: 0; }
+    .page { box-shadow: none; border: 1px solid #ccc; border-radius: 0; margin: 0; padding: 15px; }
+    .photo:hover { transform: none; }
+  }
+
+  /* Wrapper for the full layout */
+  .full-layout {
+    display: grid;
+    grid-template-rows: auto;
+    gap: 0;
+    width: 100%;
+    position: relative;
+  }
+
+  .row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    position: relative;
+  }
+
+  /* Left family block */
+  .left-family, .right-family {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+  }
+
+  .center-family {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0.8;
+  }
+
+  /* Вертикальная линия вниз от узла */
+  .node::after {
+    display: none; /* используем SVG */
+  }
+
+  /* Плашка с именем поколения слева */
+  .side-label {
+    writing-mode: vertical-rl;
+    font-size: 0.65em;
+    color: #b07840;
+    font-weight: 600;
+    letter-spacing: 1px;
+    padding: 8px 4px;
+    background: rgba(255,240,210,0.8);
+    border-radius: 8px;
+    border-left: 3px solid #d4a96a;
+    align-self: center;
+    margin-right: 6px;
+  }
+
+  /* Общий flex-ряд с лейблом */
+  .labeled-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  /* ===== ФИНАЛЬНАЯ ВЕРСТКА ===== */
+  .tree-grid {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .trow {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 6px 0;
+    position: relative;
+    width: 100%;
+  }
+
+  /* Ячейка — или node, или connector */
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  /* Вертикальная линия вниз */
+  .line-down::after {
+    content: '';
+    display: block;
+    width: 2px;
+    height: 28px;
+    background: #d4a96a;
+    margin: 0 auto;
+  }
+
+  /* Горизонтальная линия */
+  .hline {
+    height: 2px;
+    background: #d4a96a;
+    align-self: center;
+    margin-top: 45px; /* середина фото */
+  }
+
+  /* Пара: два человека + линия между ними */
+  .pair {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+  }
+
+  .pair-line {
+    width: 20px;
+    height: 2px;
+    background: #c07050;
+    align-self: center;
+    margin-top: -28px; /* подъём к середине фото */
+    position: relative;
+  }
+  .pair-line::before {
+    content: '❤';
+    font-size: 10px;
+    color: #e07070;
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Placeholder если нет фото */
+  .photo-placeholder {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f5e8d0, #ead5b0);
+    border: 3px dashed #d4a96a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+</style>
+</head>
+<body>
+<!-- Lightbox -->
+<div id="lightbox">
+  <img id="lightbox-img" src="" alt="">
+  <div id="lightbox-name"></div>
+</div>
+
+<div class="page">
+  <h1>🌳 Моё генеалогическое дерево 🌳</h1>
+  <p class="subtitle">Семья Есении</p>
+  <div class="divider"></div>
+
+  <div id="tree-container" style="position:relative; width:100%;">
+    <svg id="lines-svg" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible;">
+    </svg>
+
+    <div class="tree-grid" id="tree-grid" style="position:relative;z-index:1;">
+
+      <!-- ===== ПОКОЛЕНИЕ 0: ДЕТИ (СВЕРХУ) ===== -->
+      <div class="gen-title-row"><span class="gen-title">⭐ Мы</span></div>
+
+      <div class="trow" id="row-gen0">
+        <div class="cell" style="flex:1;align-items:center">
+          <div class="pair">
+            <div class="node gen0" id="n-esenia">
+              <img class="photo" src="Есения.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Есения">
+              <div class="photo-placeholder" style="display:none;width:110px;height:110px">👧</div>
+              <div class="name" style="font-size:1.05em;max-width:120px;color:#1a7a30;font-weight:700">Есения</div>
+              <div class="role">я</div>
+            </div>
+            <div style="width:80px"></div>
+            <div class="node gen0" id="n-stefania">
+              <img class="photo" src="Стефания.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Стефания">
+              <div class="photo-placeholder" style="display:none;width:110px;height:110px">👶</div>
+              <div class="name" style="font-size:1.05em;max-width:120px;color:#1a7a30;font-weight:700">Стефания</div>
+              <div class="role">сестра</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /row gen0 -->
+
+      <div style="height:10px"></div>
+
+      <!-- ===== ПОКОЛЕНИЕ 2: РОДИТЕЛИ + ДЯДИ ===== -->
+      <div class="gen-title-row"><span class="gen-title">👨‍👩‍👧 Мама, Папа и Дяди</span></div>
+
+      <div class="trow" id="row-gen2">
+
+        <!-- Дядя Александр (брат мамы) -->
+        <div class="cell" style="flex:0.7;align-items:center">
+          <div class="node gen2" id="n-alexander">
+            <img class="photo" src="Дядя Александр.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Александр">
+            <div class="photo-placeholder" style="display:none">👨</div>
+            <div class="name">Александр</div>
+            <div class="role">дядя</div>
+          </div>
+        </div>
+
+        <!-- Мама + Папа (центр) -->
+        <div class="cell" style="flex:1;align-items:center">
+          <div class="pair">
+            <div class="node gen2" id="n-anastasia">
+              <img class="photo" src="Мама Анастасия.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Анастасия">
+              <div class="photo-placeholder" style="display:none">👩</div>
+              <div class="name">Анастасия</div>
+              <div class="role">мама</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen2" id="n-kirill">
+              <img class="photo" src="Папа Кирилл.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Кирилл">
+              <div class="photo-placeholder" style="display:none">👨</div>
+              <div class="name">Кирилл</div>
+              <div class="role">папа</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Дядя Илья (брат папы) -->
+        <div class="cell" style="flex:0.7;align-items:center">
+          <div class="node gen2" id="n-ilya">
+            <img class="photo" src="Дядя Илья.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Илья">
+            <div class="photo-placeholder" style="display:none">👨</div>
+            <div class="name">Илья Николаевич</div>
+            <div class="role">дядя</div>
+          </div>
+        </div>
+
+      </div><!-- /row gen2 -->
+
+      <div style="height:10px"></div>
+
+      <!-- ===== ПОКОЛЕНИЕ 3: БАБУШКИ / ДЕДУШКИ ===== -->
+      <div class="gen-title-row"><span class="gen-title">🏡 Бабушки и Дедушки</span></div>
+
+      <div class="trow" id="row-gen3">
+
+        <!-- Мамина сторона: Татьяна + Михаил -->
+        <div class="cell" style="flex:1;align-items:center">
+          <div class="pair">
+            <div class="node gen3" id="n-tatyana">
+              <img class="photo" src="Бабушка Татьяна.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Татьяна">
+              <div class="photo-placeholder" style="display:none">👵</div>
+              <div class="name">Татьяна Николаевна</div>
+              <div class="role">бабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen3" id="n-mikhail">
+              <img class="photo" src="Дешушка Михаил.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Михаил">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Михаил Николаевич</div>
+              <div class="role">дедушка</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:120px;border-right:2px dashed #d4a96a44;margin:0 20px"></div>
+
+        <!-- Папина сторона: Лариса + Николай -->
+        <div class="cell" style="flex:1;align-items:center">
+          <div class="pair">
+            <div class="node gen3" id="n-larisa">
+              <img class="photo" src="Бабушка Лариса.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Лариса">
+              <div class="photo-placeholder" style="display:none">👵</div>
+              <div class="name">Лариса Анатольевна</div>
+              <div class="role">бабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen3" id="n-nikolay3">
+              <img class="photo" src="Дедушка Николай.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Николай">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Николай Викторович</div>
+              <div class="role">дедушка</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row gen3 -->
+
+      <div style="height:10px"></div>
+
+      <!-- ===== ПОКОЛЕНИЕ 4: ПРАБАБУШКИ / ПРАДЕДУШКИ ===== -->
+      <div class="gen-title-row"><span class="gen-title">🕯 Прабабушки и Прадедушки</span></div>
+
+      <div class="trow" id="row-gen4">
+
+        <!-- Родители Бабушки Татьяны -->
+        <div class="cell" id="gg-svetlana">
+          <div class="pair">
+            <div class="node gen4" id="n-svetlana">
+              <img class="photo" src="Прабабушка Светлана.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Светлана">
+              <div class="photo-placeholder" style="display:none">👵</div>
+              <div class="name">Светлана Андреевна</div>
+              <div class="role">прабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-nikolay1">
+              <img class="photo" src="Прадедушка Николай.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Николай">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Николай Павлович Егоров</div>
+              <div class="role">прадедушка</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:80px"></div>
+
+        <!-- Родители Дедушки Михаила: Полина + Николай -->
+        <div class="cell" id="gg-nikolay2-cell">
+          <div class="pair">
+            <div class="node gen4" id="n-polina">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Пилогея Григорьевна Антошкина</div>
+              <div class="role">прабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-nikolay2">
+              <img class="photo" src="Прадедушка  Николай.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Николай">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Николай Матвеевич Коцюбинский</div>
+              <div class="role">прадедушка</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:120px;border-right:2px dashed #d4a96a44;margin:0 20px"></div>
+
+        <!-- Родители Бабушки Ларисы -->
+        <div class="cell" id="gg-larina-parents">
+          <div class="pair">
+            <div class="node gen4" id="n-faina">
+              <img class="photo" src="Прабабушка Фаина.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Фаина">
+              <div class="photo-placeholder" style="display:none">👵</div>
+              <div class="name">Фаина Ивановна</div>
+              <div class="role">прабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-anatoly">
+              <img class="photo" src="Прадедушка Анатолий.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Анатолий">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Анатолий Корнилович</div>
+              <div class="role">прадедушка</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:80px"></div>
+
+        <!-- Родители Дедушки Николая -->
+        <div class="cell" id="gg-nikolay-parents">
+          <div class="pair">
+            <div class="node gen4" id="n-viktor">
+              <img class="photo" src="Прадедушка Виктор.JPG?v=2" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Виктор">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Виктор Ильич Петров</div>
+              <div class="role">прадедушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-alexandra">
+              <img class="photo" src="Прабабушка Александра.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Александра">
+              <div class="photo-placeholder" style="display:none">👵</div>
+              <div class="name">Александра Стефановна</div>
+              <div class="role">прабабушка</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row gen4 -->
+
+      <div style="height:10px"></div>
+
+      <!-- ===== ПОКОЛЕНИЕ 5: ПРАПРАДЕДУШКИ И ПРАПРАБАБУШКИ ===== -->
+      <div class="gen-title-row"><span class="gen-title">📜 Прапрадедушка и Прапрабабушка</span></div>
+
+      <div class="trow" id="row-gen5">
+        
+        <!-- Родители пары Светлана + Николай: две пары рядом -->
+        <div class="cell" id="gg-svetlana-nikolay-parents" style="display:flex;gap:40px;justify-content:center">
+          
+          <!-- Августа + Андрей (родители Светланы) -->
+          <div class="pair">
+            <div class="node gen4" id="n-avgusta">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Августа Трафимовна</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-andrey-filipov">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Андрей Гаврилович Филипов</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+          <!-- Мария + Павел (родители Николая) -->
+          <div class="pair">
+            <div class="node gen4" id="n-maria-krasnova">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Мария Краснова</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-pavel-egorov">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Павел Егоров</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="width:120px;border-right:2px dashed #d4a96a44;margin:0 20px"></div>
+
+        <!-- Родители пары Пилогея + Николай: две пары рядом -->
+        <div class="cell" id="gg-polina-nikolay-parents" style="display:flex;gap:40px;justify-content:center">
+          
+          <!-- Анна + Григорий (родители Пилогеи) -->
+          <div class="pair">
+            <div class="node gen4" id="n-anna">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Анна</div>
+              <div class="role">прапрапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-grigoriy">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Григорий</div>
+              <div class="role">прапрапрадедушка</div>
+            </div>
+          </div>
+
+          <!-- Фекла + Матвей (родители Николая) -->
+          <div class="pair">
+            <div class="node gen4" id="n-matvey-wife">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Фекла Петровна Корикова</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-matvey">
+              <img class="photo" src="Прадедушка Матвей.JPG" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Матвей">
+              <div class="photo-placeholder" style="display:none">👴</div>
+              <div class="name">Матвей Григорьевич Коцюбинский</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="width:120px;border-right:2px dashed #d4a96a44;margin:0 20px"></div>
+
+        <!-- Родители пары Фаина + Анатолий: две пары рядом -->
+        <div class="cell" id="gg-faina-anatoly-parents" style="display:flex;gap:40px;justify-content:center">
+          
+          <!-- Мария + Иван (родители Фаины) -->
+          <div class="pair">
+            <div class="node gen4" id="n-maria">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Мария Павловна</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-ivan">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Иван Павлович</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+          <!-- Анна + Корнил (родители Анатолия) -->
+          <div class="pair">
+            <div class="node gen4" id="n-anna-kornil">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Анна Михайловна</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-kornil">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Корнил Степанович</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="width:120px;border-right:2px dashed #d4a96a44;margin:0 20px"></div>
+
+        <!-- Родители пары Виктор + Александра: две пары рядом -->
+        <div class="cell" id="gg-viktor-alexandra-parents" style="display:flex;gap:40px;justify-content:center">
+          
+          <!-- Евдакия + Илья (родители Виктора) -->
+          <div class="pair">
+            <div class="node gen4" id="n-evdakiya">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Евдакия Михайловна Перина</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-ilya-petr">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Илья Васильевич Петров</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+          <!-- Матрёна + Стефан (родители Александры) -->
+          <div class="pair">
+            <div class="node gen4" id="n-matrena">
+              <div class="photo-placeholder" style="display:flex">👵</div>
+              <div class="name">Матрёна Андреевна</div>
+              <div class="role">прапрабабушка</div>
+            </div>
+            <div class="pair-line"></div>
+            <div class="node gen4" id="n-stefan">
+              <div class="photo-placeholder" style="display:flex">👴</div>
+              <div class="name">Стефан Алексеевич</div>
+              <div class="role">прапрадедушка</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Остальное пространство -->
+        <div style="flex:1"></div>
+
+      </div><!-- /row gen5 -->
+
+    </div><!-- /tree-grid -->
+  </div><!-- /tree-container -->
+
+  <div class="divider" style="margin-top:24px"></div>
+
+  <!-- Легенда -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#27ae60;background:#e8f8ec"></div>
+      <span>Я и моя сестра</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#c0392b;background:#fdecea"></div>
+      <span>Мама и папа</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#d4a96a;background:#fff8ee"></div>
+      <span>Бабушки и дедушки</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#9b8060;background:#f5f0e8"></div>
+      <span>Прабабушки и прадедушки</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#8a6840;background:#f0ebe0"></div>
+      <span>Прапрадедушки</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="border-color:#7a5830;background:#ebe5d8"></div>
+      <span>Прапрапрадедушки</span>
+    </div>
+  </div>
+
+  <p style="text-align:center;margin-top:16px;font-size:0.75em;color:#c09060;font-style:italic">
+    Учебный проект · 2 класс · 2026 г.
+  </p>
+</div>
+
+<script>
+// Lightbox
+(function() {
+  const lb = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lightbox-img');
+  const lbName = document.getElementById('lightbox-name');
+
+  document.querySelectorAll('.photo').forEach(function(img) {
+    img.addEventListener('click', function() {
+      lbImg.src = img.src;
+      lbImg.alt = img.alt;
+      // размер: в 3 раза больше текущего
+      const w = img.naturalWidth  || img.width  * 3;
+      const h = img.naturalHeight || img.height * 3;
+      const size = Math.min(Math.min(w, h) * 3, Math.min(window.innerWidth * 0.85, window.innerHeight * 0.85));
+      lbImg.style.width  = size + 'px';
+      lbImg.style.height = size + 'px';
+      // имя из ближайшего .name
+      const node = img.closest('.node');
+      const nameEl = node ? node.querySelector('.name') : null;
+      const roleEl = node ? node.querySelector('.role')  : null;
+      lbName.textContent = (nameEl ? nameEl.textContent : '') + (roleEl ? ' · ' + roleEl.textContent : '');
+      lb.classList.add('active');
+    });
+  });
+
+  lb.addEventListener('click', function() {
+    lb.classList.remove('active');
+    lbImg.src = '';
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') lb.classList.remove('active');
+  });
+})();
+
+// Рисуем соединительные линии между поколениями через SVG
+document.addEventListener('DOMContentLoaded', function() {
+  const svg = document.getElementById('lines-svg');
+  const container = document.getElementById('tree-container');
+
+  function getCenter(el) {
+    const rect = el.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    return {
+      x: rect.left - cRect.left + rect.width / 2,
+      y: rect.top - cRect.top + rect.height / 2,
+      top: rect.top - cRect.top,
+      bottom: rect.top - cRect.top + rect.height,
+      left: rect.left - cRect.left,
+      right: rect.left - cRect.left + rect.width,
+      width: rect.width,
+      height: rect.height
+    };
+  }
+
+  function drawLine(x1, y1, x2, y2, color, dashed) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', color || '#c8944a');
+    line.setAttribute('stroke-width', '2');
+    if (dashed) line.setAttribute('stroke-dasharray', '5,4');
+    line.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(line);
+  }
+
+  function drawPath(d, color, dashed) {
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', color || '#c8944a');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('fill', 'none');
+    if (dashed) path.setAttribute('stroke-dasharray', '5,4');
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+  }
+
+  function getPhotoBottom(nodeId) {
+    const node = document.getElementById(nodeId);
+    if (!node) return null;
+    const img = node.querySelector('.photo, .photo-placeholder');
+    if (!img) return null;
+    const imgR = img.getBoundingClientRect();
+    const nodeR = node.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    return {
+      x: imgR.left - cRect.left + imgR.width / 2,
+      y: nodeR.bottom - cRect.top + 4,   // ниже текста имени/роли
+      top: imgR.top - cRect.top,
+      mx: imgR.left - cRect.left + imgR.width / 2
+    };
+  }
+
+  function getPhotoTop(nodeId) {
+    const node = document.getElementById(nodeId);
+    if (!node) return null;
+    const img = node.querySelector('.photo, .photo-placeholder');
+    if (!img) return null;
+    const imgR = img.getBoundingClientRect();
+    const cRect = container.getBoundingClientRect();
+    return {
+      x: imgR.left - cRect.left + imgR.width / 2,
+      y: imgR.top - cRect.top
+    };
+  }
+
+  // Связь: parent node → child node с изгибом
+  function connectParentChild(parentId, childId, color) {
+    const p = getPhotoBottom(parentId);
+    const c = getPhotoTop(childId);
+    if (!p || !c) return;
+    const midY = (p.y + c.y) / 2;
+    drawPath(`M ${p.x} ${p.y} C ${p.x} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a');
+  }
+
+  // Вертикальный спуск от пары к одному ребёнку
+  function connectPairToChild(parent1Id, parent2Id, childId, color) {
+    const p1 = getPhotoBottom(parent1Id);
+    const p2 = getPhotoBottom(parent2Id);
+    const c = getPhotoTop(childId);
+    if (!p1 || !p2 || !c) return;
+    const midX = (p1.x + p2.x) / 2;
+    const topY = Math.max(p1.y, p2.y) + 8;
+    const midY = topY + (c.y - topY) * 0.4;
+    drawPath(`M ${p1.x} ${p1.y} L ${midX} ${topY}`, color || '#c8944a');
+    drawPath(`M ${p2.x} ${p2.y} L ${midX} ${topY}`, color || '#c8944a');
+    drawPath(`M ${midX} ${topY} C ${midX} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a');
+  }
+
+  // Пара → несколько детей
+  function connectPairToChildren(parent1Id, parent2Id, childIds, color) {
+    const p1 = getPhotoBottom(parent1Id);
+    const p2 = getPhotoBottom(parent2Id);
+    if (!p1 || !p2) return;
+    const midX = (p1.x + p2.x) / 2;
+    const topY = Math.max(p1.y, p2.y) + 8;
+
+    // Горизонталь от p1 до p2 внизу
+    drawLine(p1.x, p1.y + 4, midX, topY, color || '#c8944a');
+    drawLine(p2.x, p2.y + 4, midX, topY, color || '#c8944a');
+
+    const children = childIds.map(id => getPhotoTop(id)).filter(Boolean);
+    if (children.length === 0) return;
+
+    // Горизонтальная шина между всеми детьми
+    const minChildX = Math.min(...children.map(c => c.x));
+    const maxChildX = Math.max(...children.map(c => c.x));
+    const busY = topY + 20;
+
+    // Вертикаль вниз от пары к шине
+    drawLine(midX, topY, midX, busY, color || '#c8944a');
+    // Горизонтальная шина
+    if (children.length > 1) {
+      drawLine(minChildX, busY, maxChildX, busY, color || '#c8944a');
+    }
+    // Спуски к каждому ребёнку
+    children.forEach(c => {
+      drawLine(c.x, busY, c.x, c.y, color || '#c8944a');
+    });
+  }
+
+  // Один родитель → один ребёнок (пунктир для дяди/тёти)
+  function connectSingleToChild(parentId, childId, color, dashed) {
+    const p = getPhotoBottom(parentId);
+    const c = getPhotoTop(childId);
+    if (!p || !c) return;
+    const midY = p.y + (c.y - p.y) * 0.5;
+    drawPath(`M ${p.x} ${p.y} C ${p.x} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a', dashed);
+  }
+
+  // Задержка чтобы layout устоялся
+  setTimeout(function() {
+    svg.innerHTML = '';
+
+    // Соединяем родителей (снизу) с детьми (сверху).
+    // Схема: верх каждого родительского фото → горизонталь → середина → горизонталь → низ каждого дочернего фото
+    function connectParentsToChildrenAbove(parentIds, childIds, color) {
+      const parentTops  = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
+      const childBottoms = childIds.map(id => getPhotoBottom(id)).filter(Boolean);
+      if (!parentTops.length || !childBottoms.length) return;
+
+      // Y: родители ниже (больше Y), дети выше (меньше Y)
+      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;   // чуть выше верхнего края родителей
+      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6; // чуть ниже нижнего края детей
+      const busY = (joinParentY + joinChildY) / 2;                      // середина между рядами
+
+      const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
+      const midChildX  = childBottoms.reduce((s, c) => s + c.x, 0) / childBottoms.length;
+
+      // === Сторона родителей ===
+      parentTops.forEach(p => drawLine(p.x, p.y, p.x, joinParentY, color));
+      if (parentTops.length > 1) {
+        const minPX = Math.min(...parentTops.map(p => p.x));
+        const maxPX = Math.max(...parentTops.map(p => p.x));
+        drawLine(minPX, joinParentY, maxPX, joinParentY, color);
+      }
+      drawLine(midParentX, joinParentY, midParentX, busY, color);
+
+      // === Сторона детей ===
+      childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
+      if (childBottoms.length > 1) {
+        const minCX = Math.min(...childBottoms.map(c => c.x));
+        const maxCX = Math.max(...childBottoms.map(c => c.x));
+        drawLine(minCX, joinChildY, maxCX, joinChildY, color);
+      }
+      drawLine(midChildX, joinChildY, midChildX, busY, color);
+
+      // === Горизонтальный мост на середине если X не совпадают ===
+      if (Math.abs(midParentX - midChildX) > 2) {
+        drawLine(midParentX, busY, midChildX, busY, color);
+      }
+    }
+
+    // Один родитель → один ребёнок (плавная кривая вверх)
+    function connectSingleParentToChildAbove(parentId, childId, color, dashed) {
+      const p = getPhotoTop(parentId);
+      const c = getPhotoBottom(childId);
+      if (!p || !c) return;
+      const midY = (p.y + c.y) / 2;
+      drawPath(`M ${p.x} ${p.y} C ${p.x} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a', dashed);
+    }
+
+    // Связь через несколько поколений со смещением вправо для избежания пересечений
+    function connectWithOffset(parentIds, childIds, color, xOffset) {
+      const parentTops  = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
+      const childBottoms = childIds.map(id => getPhotoBottom(id)).filter(Boolean);
+      if (!parentTops.length || !childBottoms.length) return;
+
+      const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
+      const midChildX  = childBottoms.reduce((s, c) => s + c.x, 0) / childBottoms.length;
+
+      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;
+      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6;
+
+      // Вертикаль от родителей вниз
+      parentTops.forEach(p => drawLine(p.x, p.y, p.x, joinParentY, color));
+      if (parentTops.length > 1) {
+        const minPX = Math.min(...parentTops.map(p => p.x));
+        const maxPX = Math.max(...parentTops.map(p => p.x));
+        drawLine(minPX, joinParentY, maxPX, joinParentY, color);
+      }
+      
+      // Горизонталь + вертикаль со смещением вправо
+      const offsetX = midParentX + xOffset;
+      drawLine(midParentX, joinParentY, offsetX, joinParentY, color);
+      drawLine(offsetX, joinParentY, offsetX, joinChildY, color);
+      drawLine(offsetX, joinChildY, midChildX, joinChildY, color);
+
+      // Вертикаль вверх к детям
+      childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
+      if (childBottoms.length > 1) {
+        const minCX = Math.min(...childBottoms.map(c => c.x));
+        const maxCX = Math.max(...childBottoms.map(c => c.x));
+        drawLine(minCX, joinChildY, maxCX, joinChildY, color);
+      } else {
+        drawLine(midChildX, joinChildY, childBottoms[0].x, childBottoms[0].y, color);
+      }
+    }
+
+    // === ГЕН 0 ← ГЕН 2 ===
+    connectParentsToChildrenAbove(['n-anastasia', 'n-kirill'], ['n-esenia', 'n-stefania'], '#27ae60');
+
+    // === ГЕН 2 ← ГЕН 3 ===
+    connectParentsToChildrenAbove(['n-tatyana', 'n-mikhail'], ['n-alexander', 'n-anastasia'], '#b87030');
+    connectParentsToChildrenAbove(['n-larisa', 'n-nikolay3'], ['n-kirill', 'n-ilya'], '#b87030');
+
+    // === ГЕН 3 ← ГЕН 4 ===
+    connectParentsToChildrenAbove(['n-svetlana', 'n-nikolay1'], ['n-tatyana'], '#a87840');
+    connectParentsToChildrenAbove(['n-polina', 'n-nikolay2'], ['n-mikhail'], '#a87840');
+    connectParentsToChildrenAbove(['n-faina', 'n-anatoly'], ['n-larisa'], '#a87840');
+    connectParentsToChildrenAbove(['n-viktor', 'n-alexandra'], ['n-nikolay3'], '#a87840');
+
+    // === ГЕН 4 ← ГЕН 5 ===
+    // Родители Светланы
+    connectParentsToChildrenAbove(['n-avgusta', 'n-andrey-filipov'], ['n-svetlana'], '#8a6840');
+    // Родители Николая (Егоров)
+    connectParentsToChildrenAbove(['n-maria-krasnova', 'n-pavel-egorov'], ['n-nikolay1'], '#8a6840');
+    // Родители Пилогеи
+    connectParentsToChildrenAbove(['n-anna', 'n-grigoriy'], ['n-polina'], '#8a6840');
+    // Родители Николая (Коцюбинский)
+    connectParentsToChildrenAbove(['n-matvey-wife', 'n-matvey'], ['n-nikolay2'], '#8a6840');
+    // Родители Фаины
+    connectParentsToChildrenAbove(['n-maria', 'n-ivan'], ['n-faina'], '#8a6840');
+    // Родители Анатолия
+    connectParentsToChildrenAbove(['n-anna-kornil', 'n-kornil'], ['n-anatoly'], '#8a6840');
+    // Родители Виктора
+    connectParentsToChildrenAbove(['n-evdakiya', 'n-ilya-petr'], ['n-viktor'], '#8a6840');
+    // Родители Александры
+    connectParentsToChildrenAbove(['n-matrena', 'n-stefan'], ['n-alexandra'], '#8a6840');
+
+  }, 400);
+});
+</script>
+</body>
+</html>
