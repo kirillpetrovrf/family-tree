@@ -1105,10 +1105,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
       // === Сторона детей ===
       childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
-      if (childBottoms.length > 1) {
+      // Рисуем горизонтальную линию между детьми только если их много и они близко друг к другу
+      if (childBottoms.length > 2) {
         const minCX = Math.min(...childBottoms.map(c => c.x));
         const maxCX = Math.max(...childBottoms.map(c => c.x));
         drawLine(minCX, joinChildY, maxCX, joinChildY, color);
+      } else if (childBottoms.length === 2) {
+        // Для двух детей: рисуем линию только если они близко (< 300px)
+        const dist = Math.abs(childBottoms[0].x - childBottoms[1].x);
+        if (dist < 300) {
+          const minCX = Math.min(...childBottoms.map(c => c.x));
+          const maxCX = Math.max(...childBottoms.map(c => c.x));
+          drawLine(minCX, joinChildY, maxCX, joinChildY, color);
+        }
       }
       drawLine(midChildX, joinChildY, midChildX, busY, color);
 
