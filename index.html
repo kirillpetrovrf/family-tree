@@ -1079,39 +1079,29 @@ document.addEventListener('DOMContentLoaded', function() {
   function drawWhenReady() {
     svg.innerHTML = '';
 
-    // Соединяем родителей (снизу) с детьми (сверху).
-    // Схема: верх каждого родительского фото → горизонталь → середина → горизонталь → низ каждого дочернего фото
-    function connectParentsToChildrenAbove(parentIds, childIds, color) {
-      const parentTops  = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
+    // Соединяем детей (сверху) с родителями (снизу)
+    // В нашем дереве дети наверху, родители внизу!
+    function connectChildrenToParentsBelow(childIds, parentIds, color) {
       const childBottoms = childIds.map(id => getPhotoBottom(id)).filter(Boolean);
-      if (!parentTops.length || !childBottoms.length) return;
+      const parentTops   = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
+      if (!childBottoms.length || !parentTops.length) return;
 
-      // Y: родители ниже (больше Y), дети выше (меньше Y)
-      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;   // чуть выше верхнего края родителей
-      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6; // чуть ниже нижнего края детей
-      const busY = (joinParentY + joinChildY) / 2;                      // середина между рядами
+      // Дети сверху (меньше Y), родители снизу (больше Y)
+      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6;  // чуть ниже детей
+      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;    // чуть выше родителей
+      const busY = (joinChildY + joinParentY) / 2;                       // середина
 
-      const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
       const midChildX  = childBottoms.reduce((s, c) => s + c.x, 0) / childBottoms.length;
+      const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
 
-      // === Сторона родителей ===
-      parentTops.forEach(p => drawLine(p.x, p.y, p.x, joinParentY, color));
-      if (parentTops.length > 1) {
-        const minPX = Math.min(...parentTops.map(p => p.x));
-        const maxPX = Math.max(...parentTops.map(p => p.x));
-        drawLine(minPX, joinParentY, maxPX, joinParentY, color);
-      }
-      drawLine(midParentX, joinParentY, midParentX, busY, color);
-
-      // === Сторона детей ===
+      // === Сторона детей (сверху) ===
       childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
-      // Рисуем горизонтальную линию между детьми только если их много и они близко друг к другу
+      // Горизонтальная линия между детьми
       if (childBottoms.length > 2) {
         const minCX = Math.min(...childBottoms.map(c => c.x));
         const maxCX = Math.max(...childBottoms.map(c => c.x));
         drawLine(minCX, joinChildY, maxCX, joinChildY, color);
       } else if (childBottoms.length === 2) {
-        // Для двух детей: рисуем линию только если они близко (< 300px)
         const dist = Math.abs(childBottoms[0].x - childBottoms[1].x);
         if (dist < 300) {
           const minCX = Math.min(...childBottoms.map(c => c.x));
@@ -1121,88 +1111,58 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       drawLine(midChildX, joinChildY, midChildX, busY, color);
 
-      // === Горизонтальный мост на середине если X не совпадают ===
-      if (Math.abs(midParentX - midChildX) > 2) {
-        drawLine(midParentX, busY, midChildX, busY, color);
-      }
-    }
-
-    // Один родитель → один ребёнок (плавная кривая вверх)
-    function connectSingleParentToChildAbove(parentId, childId, color, dashed) {
-      const p = getPhotoTop(parentId);
-      const c = getPhotoBottom(childId);
-      if (!p || !c) return;
-      const midY = (p.y + c.y) / 2;
-      drawPath(`M ${p.x} ${p.y} C ${p.x} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a', dashed);
-    }
-
-    // Связь через несколько поколений со смещением вправо для избежания пересечений
-    function connectWithOffset(parentIds, childIds, color, xOffset) {
-      const parentTops  = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
-      const childBottoms = childIds.map(id => getPhotoBottom(id)).filter(Boolean);
-      if (!parentTops.length || !childBottoms.length) return;
-
-      const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
-      const midChildX  = childBottoms.reduce((s, c) => s + c.x, 0) / childBottoms.length;
-
-      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;
-      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6;
-
-      // Вертикаль от родителей вниз
+      // === Сторона родителей (снизу) ===
       parentTops.forEach(p => drawLine(p.x, p.y, p.x, joinParentY, color));
       if (parentTops.length > 1) {
         const minPX = Math.min(...parentTops.map(p => p.x));
         const maxPX = Math.max(...parentTops.map(p => p.x));
         drawLine(minPX, joinParentY, maxPX, joinParentY, color);
       }
-      
-      // Горизонталь + вертикаль со смещением вправо
-      const offsetX = midParentX + xOffset;
-      drawLine(midParentX, joinParentY, offsetX, joinParentY, color);
-      drawLine(offsetX, joinParentY, offsetX, joinChildY, color);
-      drawLine(offsetX, joinChildY, midChildX, joinChildY, color);
+      drawLine(midParentX, joinParentY, midParentX, busY, color);
 
-      // Вертикаль вверх к детям
-      childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
-      if (childBottoms.length > 1) {
-        const minCX = Math.min(...childBottoms.map(c => c.x));
-        const maxCX = Math.max(...childBottoms.map(c => c.x));
-        drawLine(minCX, joinChildY, maxCX, joinChildY, color);
-      } else {
-        drawLine(midChildX, joinChildY, childBottoms[0].x, childBottoms[0].y, color);
+      // === Горизонтальный мост на середине ===
+      if (Math.abs(midChildX - midParentX) > 2) {
+        drawLine(midChildX, busY, midParentX, busY, color);
       }
     }
 
-    // === ГЕН 0 ← ГЕН 2 ===
-    connectParentsToChildrenAbove(['n-anastasia', 'n-kirill'], ['n-esenia', 'n-stefania'], '#27ae60');
+    // === ГЕН 0 → ГЕН 2 ===
+    // Есения + Стефания → их родители Анастасия + Кирилл
+    connectChildrenToParentsBelow(['n-esenia', 'n-stefania'], ['n-anastasia', 'n-kirill'], '#27ae60');
 
-    // === ГЕН 2 ← ГЕН 3 ===
-    connectParentsToChildrenAbove(['n-tatyana', 'n-mikhail'], ['n-alexander', 'n-anastasia'], '#b87030');
-    connectParentsToChildrenAbove(['n-larisa', 'n-nikolay3'], ['n-kirill', 'n-ilya'], '#b87030');
+    // === ГЕН 2 → ГЕН 3 ===
+    // Александр + Анастасия → их родители Татьяна + Михаил
+    connectChildrenToParentsBelow(['n-alexander', 'n-anastasia'], ['n-tatyana', 'n-mikhail'], '#b87030');
+    // Кирилл + Илья → их родители Лариса + Николай
+    connectChildrenToParentsBelow(['n-kirill', 'n-ilya'], ['n-larisa', 'n-nikolay3'], '#b87030');
 
-    // === ГЕН 3 ← ГЕН 4 ===
-    connectParentsToChildrenAbove(['n-svetlana', 'n-nikolay1'], ['n-tatyana'], '#a87840');
-    connectParentsToChildrenAbove(['n-polina', 'n-nikolay2'], ['n-mikhail'], '#a87840');
-    connectParentsToChildrenAbove(['n-faina', 'n-anatoly'], ['n-larisa'], '#a87840');
-    connectParentsToChildrenAbove(['n-viktor', 'n-alexandra'], ['n-nikolay3'], '#a87840');
+    // === ГЕН 3 → ГЕН 4 ===
+    // Татьяна → её родители Светлана + Николай Егоров
+    connectChildrenToParentsBelow(['n-tatyana'], ['n-svetlana', 'n-nikolay1'], '#a87840');
+    // Михаил → его родители Пилогея + Николай Коцюбинский
+    connectChildrenToParentsBelow(['n-mikhail'], ['n-polina', 'n-nikolay2'], '#a87840');
+    // Лариса → её родители Фаина + Анатолий
+    connectChildrenToParentsBelow(['n-larisa'], ['n-faina', 'n-anatoly'], '#a87840');
+    // Николай → его родители Виктор + Александра
+    connectChildrenToParentsBelow(['n-nikolay3'], ['n-viktor', 'n-alexandra'], '#a87840');
 
-    // === ГЕН 4 ← ГЕН 5 ===
-    // Родители Светланы
-    connectParentsToChildrenAbove(['n-avgusta', 'n-andrey-filipov'], ['n-svetlana'], '#8a6840');
-    // Родители Николая (Егоров)
-    connectParentsToChildrenAbove(['n-maria-krasnova', 'n-pavel-egorov'], ['n-nikolay1'], '#8a6840');
-    // Родители Пилогеи
-    connectParentsToChildrenAbove(['n-anna', 'n-grigoriy'], ['n-polina'], '#8a6840');
-    // Родители Николая (Коцюбинский)
-    connectParentsToChildrenAbove(['n-matvey-wife', 'n-matvey'], ['n-nikolay2'], '#8a6840');
-    // Родители Фаины
-    connectParentsToChildrenAbove(['n-maria', 'n-ivan'], ['n-faina'], '#8a6840');
-    // Родители Анатолия
-    connectParentsToChildrenAbove(['n-anna-kornil', 'n-kornil'], ['n-anatoly'], '#8a6840');
-    // Родители Виктора
-    connectParentsToChildrenAbove(['n-evdakiya', 'n-ilya-petr'], ['n-viktor'], '#8a6840');
-    // Родители Александры
-    connectParentsToChildrenAbove(['n-matrena', 'n-stefan'], ['n-alexandra'], '#8a6840');
+    // === ГЕН 4 → ГЕН 5 ===
+    // Светлана → её родители Августа + Андрей
+    connectChildrenToParentsBelow(['n-svetlana'], ['n-avgusta', 'n-andrey-filipov'], '#8a6840');
+    // Николай Егоров → его родители Мария + Павел
+    connectChildrenToParentsBelow(['n-nikolay1'], ['n-maria-krasnova', 'n-pavel-egorov'], '#8a6840');
+    // Пилогея → её родители Анна + Григорий
+    connectChildrenToParentsBelow(['n-polina'], ['n-anna', 'n-grigoriy'], '#8a6840');
+    // Николай Коцюбинский → его родители Фекла + Матвей
+    connectChildrenToParentsBelow(['n-nikolay2'], ['n-matvey-wife', 'n-matvey'], '#8a6840');
+    // Фаина → её родители Мария + Иван
+    connectChildrenToParentsBelow(['n-faina'], ['n-maria', 'n-ivan'], '#8a6840');
+    // Анатолий → его родители Анна + Корнил
+    connectChildrenToParentsBelow(['n-anatoly'], ['n-anna-kornil', 'n-kornil'], '#8a6840');
+    // Виктор → его родители Евдакия + Илья
+    connectChildrenToParentsBelow(['n-viktor'], ['n-evdakiya', 'n-ilya-petr'], '#8a6840');
+    // Александра → её родители Матрёна + Стефан
+    connectChildrenToParentsBelow(['n-alexandra'], ['n-matrena', 'n-stefan'], '#8a6840');
   }
 
   // Запускаем отрисовку только после полной загрузки всех изображений
