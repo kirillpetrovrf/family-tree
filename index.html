@@ -1080,49 +1080,51 @@ document.addEventListener('DOMContentLoaded', function() {
     svg.innerHTML = '';
 
     // Соединяем детей (сверху) с родителями (снизу)
-    // В нашем дереве дети наверху, родители внизу!
+    // Простая версия: каждая пара детей → пара родителей без сложных горизонталей
     function connectChildrenToParentsBelow(childIds, parentIds, color) {
       const childBottoms = childIds.map(id => getPhotoBottom(id)).filter(Boolean);
       const parentTops   = parentIds.map(id => getPhotoTop(id)).filter(Boolean);
       if (!childBottoms.length || !parentTops.length) return;
 
-      // Дети сверху (меньше Y), родители снизу (больше Y)
-      const joinChildY  = Math.max(...childBottoms.map(c => c.y)) + 6;  // чуть ниже детей
-      const joinParentY = Math.min(...parentTops.map(p => p.y)) - 6;    // чуть выше родителей
-      const busY = (joinChildY + joinParentY) / 2;                       // середина
-
+      // Находим центры групп
       const midChildX  = childBottoms.reduce((s, c) => s + c.x, 0) / childBottoms.length;
       const midParentX = parentTops.reduce((s, p) => s + p.x, 0) / parentTops.length;
+      
+      const maxChildY  = Math.max(...childBottoms.map(c => c.y));
+      const minParentY = Math.min(...parentTops.map(p => p.y));
+      
+      // Точки соединения
+      const childJoinY = maxChildY + 12;
+      const parentJoinY = minParentY - 12;
+      const midY = (childJoinY + parentJoinY) / 2;
 
-      // === Сторона детей (сверху) ===
-      childBottoms.forEach(c => drawLine(c.x, c.y, c.x, joinChildY, color));
-      // Горизонтальная линия между детьми
-      if (childBottoms.length > 2) {
-        const minCX = Math.min(...childBottoms.map(c => c.x));
-        const maxCX = Math.max(...childBottoms.map(c => c.x));
-        drawLine(minCX, joinChildY, maxCX, joinChildY, color);
-      } else if (childBottoms.length === 2) {
-        const dist = Math.abs(childBottoms[0].x - childBottoms[1].x);
-        if (dist < 300) {
-          const minCX = Math.min(...childBottoms.map(c => c.x));
-          const maxCX = Math.max(...childBottoms.map(c => c.x));
-          drawLine(minCX, joinChildY, maxCX, joinChildY, color);
+      // От каждого ребенка вниз к общей точке детей
+      childBottoms.forEach(c => {
+        drawLine(c.x, c.y, c.x, childJoinY, color);
+        // От точки ребенка к центральной точке детей
+        if (Math.abs(c.x - midChildX) > 2) {
+          drawPath(`M ${c.x} ${childJoinY} L ${midChildX} ${childJoinY}`, color);
         }
-      }
-      drawLine(midChildX, joinChildY, midChildX, busY, color);
+      });
 
-      // === Сторона родителей (снизу) ===
-      parentTops.forEach(p => drawLine(p.x, p.y, p.x, joinParentY, color));
-      if (parentTops.length > 1) {
-        const minPX = Math.min(...parentTops.map(p => p.x));
-        const maxPX = Math.max(...parentTops.map(p => p.x));
-        drawLine(minPX, joinParentY, maxPX, joinParentY, color);
-      }
-      drawLine(midParentX, joinParentY, midParentX, busY, color);
+      // От каждого родителя вверх к общей точке родителей  
+      parentTops.forEach(p => {
+        drawLine(p.x, p.y, p.x, parentJoinY, color);
+        // От точки родителя к центральной точке родителей
+        if (Math.abs(p.x - midParentX) > 2) {
+          drawPath(`M ${p.x} ${parentJoinY} L ${midParentX} ${parentJoinY}`, color);
+        }
+      });
 
-      // === Горизонтальный мост на середине ===
-      if (Math.abs(midChildX - midParentX) > 2) {
-        drawLine(midChildX, busY, midParentX, busY, color);
+      // Центральная вертикальная линия от детей к родителям
+      if (Math.abs(midChildX - midParentX) < 5) {
+        // Если центры совпадают - прямая линия
+        drawLine(midChildX, childJoinY, midParentX, parentJoinY, color);
+      } else {
+        // Если центры разные - изгиб через середину
+        drawLine(midChildX, childJoinY, midChildX, midY, color);
+        drawLine(midChildX, midY, midParentX, midY, color);
+        drawLine(midParentX, midY, midParentX, parentJoinY, color);
       }
     }
 
