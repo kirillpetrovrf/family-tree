@@ -638,7 +638,7 @@
   <!-- Edit Controls -->
   <div class="edit-controls">
     <button class="btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ Режим редактирования</button>
-    <button class="btn" id="github-settings-btn" onclick="showGithubSettings()">⚙️ Настройки GitHub</button>
+    <button class="btn" id="github-settings-btn" onclick="showGithubSettings()" style="opacity:0.6;font-size:0.85em">⚙️ Настройки (опционально)</button>
   </div>
   
   <div class="divider"></div>
@@ -1413,12 +1413,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // === EDIT MODE SYSTEM ===
 let editMode = false;
 let currentEditingId = null;
-let githubToken = localStorage.getItem('gh_token') || '';
+// Default token - anyone can edit!
+let githubToken = localStorage.getItem('gh_token') || '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';
 let githubRepo = localStorage.getItem('gh_repo') || 'kirillpetrovrf/family-tree';
 
 // Load saved GitHub settings
-if (githubToken) {
-  document.getElementById('github-token').value = githubToken;
+if (localStorage.getItem('gh_token')) {
+  document.getElementById('github-token').value = localStorage.getItem('gh_token');
 }
 document.getElementById('github-repo').value = githubRepo;
 
