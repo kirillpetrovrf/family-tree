@@ -1075,8 +1075,8 @@ document.addEventListener('DOMContentLoaded', function() {
     drawPath(`M ${p.x} ${p.y} C ${p.x} ${midY}, ${c.x} ${midY}, ${c.x} ${c.y}`, color || '#c8944a', dashed);
   }
 
-  // Задержка чтобы layout устоялся
-  setTimeout(function() {
+  // Дождаться загрузки всех фотографий
+  function drawWhenReady() {
     svg.innerHTML = '';
 
     // Соединяем родителей (снизу) с детьми (сверху).
@@ -1194,8 +1194,37 @@ document.addEventListener('DOMContentLoaded', function() {
     connectParentsToChildrenAbove(['n-evdakiya', 'n-ilya-petr'], ['n-viktor'], '#8a6840');
     // Родители Александры
     connectParentsToChildrenAbove(['n-matrena', 'n-stefan'], ['n-alexandra'], '#8a6840');
+  }
 
-  }, 400);
+  // Запускаем отрисовку только после полной загрузки всех изображений
+  const images = document.querySelectorAll('.photo');
+  let loadedCount = 0;
+  const totalImages = images.length;
+
+  function checkAllLoaded() {
+    loadedCount++;
+    if (loadedCount >= totalImages) {
+      // Все изображения загружены, ждем еще немного для layout
+      setTimeout(drawWhenReady, 200);
+    }
+  }
+
+  images.forEach(function(img) {
+    if (img.complete && img.naturalHeight !== 0) {
+      checkAllLoaded();
+    } else {
+      img.addEventListener('load', checkAllLoaded);
+      img.addEventListener('error', checkAllLoaded);
+    }
+  });
+
+  // Резервный таймер на случай проблем с загрузкой
+  setTimeout(function() {
+    if (loadedCount < totalImages) {
+      console.log('Forcing draw after timeout');
+      drawWhenReady();
+    }
+  }, 3000);
 });
 </script>
 </body>
