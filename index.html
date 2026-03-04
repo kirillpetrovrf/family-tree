@@ -688,7 +688,7 @@
         <div class="cell" id="gg-nikolay-parents">
           <div class="pair">
             <div class="node gen4" id="n-viktor">
-              <img class="photo" src="Прадедушка Виктор.JPG?v=2" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Виктор">
+              <img class="photo" src="Прадедушка Виктор.jpg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="Виктор">
               <div class="photo-placeholder" style="display:none">👴</div>
               <div class="name">Виктор Ильич Петров</div>
               <div class="role">прадедушка</div>
@@ -1101,20 +1101,31 @@ document.addEventListener('DOMContentLoaded', function() {
       // От каждого ребенка вниз к общей точке детей
       childBottoms.forEach(c => {
         drawLine(c.x, c.y, c.x, childJoinY, color);
-        // От точки ребенка к центральной точке детей
-        if (Math.abs(c.x - midChildX) > 2) {
-          drawPath(`M ${c.x} ${childJoinY} L ${midChildX} ${childJoinY}`, color);
-        }
       });
+      
+      // Горизонтальная линия между детьми только если они ОЧЕНЬ близко (меньше 150px)
+      if (childBottoms.length > 1) {
+        const minX = Math.min(...childBottoms.map(c => c.x));
+        const maxX = Math.max(...childBottoms.map(c => c.x));
+        const distance = maxX - minX;
+        
+        if (distance < 150) {
+          // Если дети очень близко - рисуем горизонталь
+          drawLine(minX, childJoinY, maxX, childJoinY, color);
+        }
+      }
 
       // От каждого родителя вверх к общей точке родителей  
       parentTops.forEach(p => {
         drawLine(p.x, p.y, p.x, parentJoinY, color);
-        // От точки родителя к центральной точке родителей
-        if (Math.abs(p.x - midParentX) > 2) {
-          drawPath(`M ${p.x} ${parentJoinY} L ${midParentX} ${parentJoinY}`, color);
-        }
       });
+      
+      // Горизонтальная линия между родителями
+      if (parentTops.length > 1) {
+        const minX = Math.min(...parentTops.map(p => p.x));
+        const maxX = Math.max(...parentTops.map(p => p.x));
+        drawLine(minX, parentJoinY, maxX, parentJoinY, color);
+      }
 
       // Центральная вертикальная линия от детей к родителям
       if (Math.abs(midChildX - midParentX) < 5) {
