@@ -1123,8 +1123,26 @@ async function loadFamilyData() {
       if (roleEl && personData.role) roleEl.textContent = personData.role;
       
       // Update photo if external URL
-      if (photoEl && personData.photoUrl && (personData.photoUrl.startsWith('http://') || personData.photoUrl.startsWith('https://'))) {
+      if (personData.photoUrl && (personData.photoUrl.startsWith('http://') || personData.photoUrl.startsWith('https://'))) {
+        // If no img.photo element exists, create one
+        if (!photoEl) {
+          photoEl = document.createElement('img');
+          photoEl.className = 'photo';
+          photoEl.onerror = function() {
+            this.style.display = 'none';
+            const placeholder = this.nextElementSibling;
+            if (placeholder && placeholder.classList.contains('photo-placeholder')) {
+              placeholder.style.display = 'flex';
+            }
+          };
+          // Insert before name
+          node.insertBefore(photoEl, nameEl);
+        }
         photoEl.src = personData.photoUrl;
+        photoEl.style.display = 'block';
+        // Hide placeholder
+        const placeholder = node.querySelector('.photo-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
       }
       
       // Add birth date display under role
@@ -1617,11 +1635,33 @@ async function savePersonData() {
   const node = document.getElementById(currentEditingId);
   const nameEl = node.querySelector('.name');
   const roleEl = node.querySelector('.role');
-  const photoEl = node.querySelector('.photo');
+  let photoEl = node.querySelector('.photo');
   
   if (nameEl) nameEl.textContent = name;
   if (roleEl) roleEl.textContent = role;
-  if (photoEl && photoUrl) photoEl.src = photoUrl;
+  
+  // Update photo
+  if (photoUrl && (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'))) {
+    // If no img.photo element exists, create one
+    if (!photoEl) {
+      photoEl = document.createElement('img');
+      photoEl.className = 'photo';
+      photoEl.onerror = function() {
+        this.style.display = 'none';
+        const placeholder = this.nextElementSibling;
+        if (placeholder && placeholder.classList.contains('photo-placeholder')) {
+          placeholder.style.display = 'flex';
+        }
+      };
+      // Insert before name
+      node.insertBefore(photoEl, nameEl);
+    }
+    photoEl.src = photoUrl;
+    photoEl.style.display = 'block';
+    // Hide placeholder
+    const placeholder = node.querySelector('.photo-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+  }
   
   // Save to GitHub
   console.log('GitHub token available:', !!githubToken);
