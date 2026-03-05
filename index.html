@@ -1652,11 +1652,19 @@ async function saveToGitHub(personData) {
     if (getResponse.ok) {
       const fileData = await getResponse.json();
       sha = fileData.sha;
-      const content = atob(fileData.content);
-      jsonData = JSON.parse(content);
+      // Proper UTF-8 decoding from base64
+      const base64Content = fileData.content.replace(/\n/g, '');
+      const binaryString = atob(base64Content);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const utf8String = new TextDecoder('utf-8').decode(bytes);
+      jsonData = JSON.parse(utf8String);
+      console.log('Loaded existing data from GitHub');
     }
   } catch (e) {
-    console.log('Creating new family_data.json');
+    console.log('Creating new family_data.json', e);
   }
   
   // 2. Update data
@@ -1673,20 +1681,13 @@ async function saveToGitHub(personData) {
   // 3. Save back to GitHub with proper UTF-8 encoding
   const jsonString = JSON.stringify(jsonData, null, 2);
   
-  // Universal UTF-8 to base64 encoding (works in all browsers)
-  let content;
-  try {
-    // Modern way
-    const utf8Bytes = new TextEncoder().encode(jsonString);
-    const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
-    content = btoa(binaryString);
-  } catch (e) {
-    // Fallback for older browsers
-    console.log('Using fallback encoding');
-    content = btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-      return String.fromCharCode(parseInt(p1, 16));
-    }));
+  // Proper UTF-8 to base64 encoding
+  const utf8Bytes = new TextEncoder().encode(jsonString);
+  let binaryString = '';
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binaryString += String.fromCharCode(utf8Bytes[i]);
   }
+  const content = btoa(binaryString);
   
   console.log('Saving to GitHub...', personData.name);
   
