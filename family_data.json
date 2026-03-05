@@ -19,8 +19,8 @@
     "n-alexander": {
       "name": "Александр",
       "role": "дядя",
-      "birthDate": "",
-      "birthPlace": "",
+      "birthDate": "1989",
+      "birthPlace": "кунгур",
       "deathDate": "",
       "photoUrl": "Дядя Александр.JPG"
     },
