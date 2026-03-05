@@ -1577,7 +1577,10 @@ function saveGithubSettings() {
 }
 
 async function savePersonData() {
-  if (!currentEditingId) return;
+  if (!currentEditingId) {
+    console.error('No editing ID set!');
+    return;
+  }
   
   const name = document.getElementById('edit-name').value.trim();
   const role = document.getElementById('edit-role').value.trim();
@@ -1585,6 +1588,8 @@ async function savePersonData() {
   const birthPlace = document.getElementById('edit-birthPlace').value.trim();
   const deathDate = document.getElementById('edit-deathDate').value.trim();
   const photoUrl = document.getElementById('edit-photoUrl').value.trim();
+  
+  console.log('Saving data:', { name, role, birthDate, birthPlace, deathDate, photoUrl });
   
   if (!name) {
     alert('Имя обязательно!');
@@ -1602,8 +1607,10 @@ async function savePersonData() {
   if (photoEl && photoUrl) photoEl.src = photoUrl;
   
   // Save to GitHub
+  console.log('GitHub token available:', !!githubToken);
   if (githubToken) {
     try {
+      console.log('Attempting to save to GitHub...');
       await saveToGitHub({
         id: currentEditingId,
         name,
@@ -1665,10 +1672,23 @@ async function saveToGitHub(personData) {
   
   // 3. Save back to GitHub with proper UTF-8 encoding
   const jsonString = JSON.stringify(jsonData, null, 2);
-  // Proper UTF-8 to base64 encoding
-  const utf8Bytes = new TextEncoder().encode(jsonString);
-  const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
-  const content = btoa(binaryString);
+  
+  // Universal UTF-8 to base64 encoding (works in all browsers)
+  let content;
+  try {
+    // Modern way
+    const utf8Bytes = new TextEncoder().encode(jsonString);
+    const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
+    content = btoa(binaryString);
+  } catch (e) {
+    // Fallback for older browsers
+    console.log('Using fallback encoding');
+    content = btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+      return String.fromCharCode(parseInt(p1, 16));
+    }));
+  }
+  
+  console.log('Saving to GitHub...', personData.name);
   
   const putUrl = `https://api.github.com/repos/${githubRepo}/contents/family_data.json`;
   const putResponse = await fetch(putUrl, {
@@ -1687,10 +1707,13 @@ async function saveToGitHub(personData) {
   
   if (!putResponse.ok) {
     const error = await putResponse.json();
-    throw new Error(error.message || 'GitHub API error');
+    console.error('GitHub API Error:', error);
+    throw new Error(error.message || `GitHub API error: ${putResponse.status}`);
   }
   
-  return await putResponse.json();
+  const result = await putResponse.json();
+  console.log('Successfully saved to GitHub!', result);
+  return result;
 }
 
 // Close modals on click outside
