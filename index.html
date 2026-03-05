@@ -1170,6 +1170,11 @@ async function loadFamilyData() {
         }
         infoEl.textContent = infoText;
         infoEl.style.display = 'block';
+        
+        // Log the element to inspect it in console
+        console.log('person-info element:', infoEl);
+        console.log('Node children:', node.children);
+        console.log('Node HTML:', node.innerHTML);
       }
     });
   } catch (error) {
