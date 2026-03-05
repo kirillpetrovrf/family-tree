@@ -1663,8 +1663,12 @@ async function saveToGitHub(personData) {
     photoUrl: personData.photoUrl
   };
   
-  // 3. Save back to GitHub
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(jsonData, null, 2))));
+  // 3. Save back to GitHub with proper UTF-8 encoding
+  const jsonString = JSON.stringify(jsonData, null, 2);
+  // Proper UTF-8 to base64 encoding
+  const utf8Bytes = new TextEncoder().encode(jsonString);
+  const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
+  const content = btoa(binaryString);
   
   const putUrl = `https://api.github.com/repos/${githubRepo}/contents/family_data.json`;
   const putResponse = await fetch(putUrl, {
