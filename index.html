@@ -638,6 +638,7 @@
   <!-- Edit Controls -->
   <div class="edit-controls">
     <button class="btn" id="edit-mode-btn" onclick="toggleEditMode()">✏️ Режим редактирования</button>
+    <button class="btn" onclick="forceReloadData()" style="background:#f0f0f0">🔄 Обновить данные</button>
     <button class="btn" id="github-settings-btn" onclick="showGithubSettings()" style="opacity:0.6;font-size:0.85em">⚙️ Настройки (опционально)</button>
   </div>
   
@@ -1095,11 +1096,17 @@
 // === LOAD FAMILY DATA FROM JSON ===
 async function loadFamilyData() {
   try {
+    console.log('Loading family data from JSON...');
     const response = await fetch('family_data.json?t=' + Date.now());
-    if (!response.ok) return;
+    if (!response.ok) {
+      console.warn('Could not fetch family_data.json:', response.status);
+      return;
+    }
     
     const data = await response.json();
     if (!data.people) return;
+    
+    console.log('Family data loaded successfully!', Object.keys(data.people).length, 'people');
     
     // Update each person's card with saved data
     Object.keys(data.people).forEach(personId => {
@@ -1479,6 +1486,16 @@ if (localStorage.getItem('gh_token')) {
 }
 document.getElementById('github-repo').value = githubRepo;
 
+function forceReloadData() {
+  console.log('Force reloading data...');
+  loadFamilyData().then(() => {
+    alert('✅ Данные обновлены!');
+  }).catch(err => {
+    console.error('Error reloading:', err);
+    alert('⚠️ Не удалось загрузить данные. Попробуйте обновить страницу (Ctrl+Shift+R)');
+  });
+}
+
 function toggleEditMode() {
   editMode = !editMode;
   const container = document.getElementById('tree-container');
@@ -1620,9 +1637,12 @@ async function savePersonData() {
         deathDate,
         photoUrl
       });
-      alert('✅ Данные сохранены на GitHub!');
-      // Reload data after a short delay to let GitHub update
+      alert('✅ Данные сохранены на GitHub!\n\n💡 Если не видите изменения - нажмите кнопку "🔄 Обновить данные" через 5-10 секунд или обновите страницу (Ctrl+Shift+R)');
+      
+      // Reload data multiple times to bypass GitHub Pages cache
       setTimeout(() => loadFamilyData(), 2000);
+      setTimeout(() => loadFamilyData(), 5000);
+      setTimeout(() => loadFamilyData(), 10000);
     } catch (error) {
       console.error('Error saving to GitHub:', error);
       alert('❌ Ошибка при сохранении на GitHub: ' + error.message);
